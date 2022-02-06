@@ -18,12 +18,14 @@ app.get('/', (req, res) => {
 
 
 io.on('connection', (socket) => {
+  console.log(`socket ${socket.id} has connected`);
   socket.on('new game', (gameType) => {
     newGame(socket, gameType);
   });
   socket.on('join game', (gameId) => {
     joinGame(socket, gameId)
   });
+  io.to(socket.id).emit('connection-status', 'true');
 });
 io.of("/").adapter.on("join-room", (room, id) => {
   if(room != id){
