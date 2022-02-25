@@ -19,11 +19,14 @@ app.get('/', (req, res) => {
 
 io.on('connection', (socket) => {
   console.log(`socket ${socket.id} has connected`);
-  socket.on('new game', (gameType) => {
-    newGame(socket, gameType);
+  socket.on('new game', (gameId) => {
+    newGame(socket, gameId);
   });
   socket.on('join game', (gameId) => {
     joinGame(socket, gameId)
+  });
+  socket.on('list games', (gameId) => {
+    listGames(socket)
   });
   io.to(socket.id).emit('connection-status', 'true');
 });
@@ -46,6 +49,7 @@ io.of("/").adapter.on("leave-room", (room, id) => {
 http.listen(port, function() {
    console.log('listening on *:' + port);
 });
+
 // function to create new game
 async function newGame(socket, gameType){
   // figure out what new game looks like
@@ -56,4 +60,10 @@ async function newGame(socket, gameType){
 async function joinGame(socket, gameId){
   // figure out join game looks like
   console.log('join game initiated');
+}
+
+// function to list games
+async function listGames(socket, gameId){
+  // figure out list game looks like
+  console.log('game list initiated');
 }
