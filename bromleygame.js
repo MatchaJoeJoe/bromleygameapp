@@ -10,31 +10,35 @@ const io = require('socket.io')(http, {
     methods: ["GET", "POST"]
   }
 });
+var roomsList = [];
 
 // root server handling
 app.get('/', (req, res) => {
   res.redirect('https://matchajoejoe.github.io/games/bromley-game/');
 })
 
-
 io.on('connection', (socket) => {
   console.log(`socket ${socket.id} has connected`);
-  socket.on('new game', (gameId) => {
-    newGame(socket, gameId);
+  socket.on('list games', (socketId) => {
+    listGames(socket, socketId);
   });
-  socket.on('join game', (gameId) => {
-    joinGame(socket, gameId)
+  socket.on('host game', (roomName) => {
+    hostGame(socket, roomName);
   });
-  socket.on('list games', (gameId) => {
-    listGames(socket)
+  socket.on('disconnect me', (socketId) => {
+    if(socketId == socket.id){
+      console.log(`socket ${socket.id} has disconnected`);
+      socket.disconnect();
+    }
   });
-  io.to(socket.id).emit('connection-status', 'true');
+  io.to(socket.id).emit('socket-id', socket.id);
 });
 io.of("/").adapter.on("join-room", (room, id) => {
   if(room != id){
     var thisSocket = io.sockets.sockets.get(id);
     thisSocket.broadcast.to(room).emit('player joined', id);
-    console.log(`socket ${id} has joined room ${room}`);
+    var roomSize = io.sockets.adapter.rooms.get(room).size;
+    console.log(`socket ${id} has joined room ${room} (${roomSize})`);
   }
 });
 
@@ -42,7 +46,8 @@ io.of("/").adapter.on("leave-room", (room, id) => {
   if(room != id){
     var thisSocket = io.sockets.sockets.get(id);
     thisSocket.broadcast.to(room).emit('player left', id);
-    console.log(`socket ${id} has left room ${room}`);
+    var roomSize = io.sockets.adapter.rooms.get(room).size;
+    console.log(`socket ${id} has left room ${room} (${roomSize})`);
   }
 });
 
@@ -50,20 +55,26 @@ http.listen(port, function() {
    console.log('listening on *:' + port);
 });
 
-// function to create new game
-async function newGame(socket, gameType){
-  // figure out what new game looks like
-  console.log('new game initiated');
+// function to list available games
+async function listGames(socket, socketId){
+  var stringList = {
+    strings: roomsList
+  }
+  io.to(socketId).emit("games-list", JSON.stringify(stringList));
 }
+async function hostGame(socket, roomName){
+  if(roomsList.includes(roomName)){
+    io.to(socket.id).emit("room-created", false);
+  } else {
+    socket.join(roomName);
+    roomsList.push(roomName);
+    console.log(socket.id + " created " + roomName)
+  }
 
+}
 // function to join a game
 async function joinGame(socket, gameId){
-  // figure out join game looks like
-  console.log('join game initiated');
-}
-
-// function to list games
-async function listGames(socket, gameId){
-  // figure out list game looks like
-  console.log('game list initiated');
+  socket.join(gameId, function () {
+    console.log(socket.id + " now in rooms ", socket.rooms);
+  });
 }
