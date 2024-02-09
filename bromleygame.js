@@ -17,7 +17,7 @@ var count = 0;
 
 // root server handling
 app.get('/', (req, res) => {
-  res.redirect('https://matchajoejoe.github.io/games/bromley-game/');
+  res.redirect('https://bromley-game.github.io/');
 })
 
 io.on('connection', (socket) => {
